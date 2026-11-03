@@ -35,6 +35,15 @@ nav a {
 }
 nav a:hover { color: var(--green); }
 
+.countdown {
+  color: var(--green-dark); font-size: .9rem; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 560px) {
+  .site-header .container { flex-wrap: wrap; }
+  .countdown { order: 3; width: 100%; }
+}
+
 .hero {
   background: linear-gradient(160deg, var(--green) 0%, var(--green-dark) 100%);
   color: #fff;

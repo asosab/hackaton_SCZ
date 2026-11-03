@@ -11,6 +11,7 @@
   <header class="site-header">
     <div class="container">
       <span class="logo">hackaton<b>SCZ</b></span>
+      <span class="countdown" id="countdown"></span>
       <nav>
         <a href="#proyecto">El proyecto</a>
         <a href="#equipo">Equipo</a>
@@ -68,11 +69,12 @@
         </article>
         <article class="member-card">
           <div class="member-avatar">AP</div>
-          <h3>Aimeé Paye</h3>
+          <h3>Aimee Paye</h3>
           <p class="member-role">Equipo</p>
           <p class="member-bio">
-            Segunda integrante del equipo. Su biografía y sus redes se
-            publican acá en cuanto ella las revise y las apruebe.
+            Compañera de trabajo de Alejandro; se sumó al proyecto el
+            mismo día del hackathon. Su bio completa y sus redes se
+            publican acá cuando ella las apruebe.
           </p>
         </article>
         <!-- Nuevas tarjetas de equipo acá -->
@@ -88,5 +90,21 @@
       </p>
     </div>
   </footer>
+
+  <script>
+    (function () {
+      var end = new Date(2026, 10, 3, 20, 30); // el pitch es hoy a las 8:30 pm
+      var el = document.getElementById('countdown');
+      function tick() {
+        var s = Math.floor((end - new Date()) / 1000);
+        if (s <= 0) { el.textContent = 'estamos presentando'; return; }
+        var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
+        el.textContent = 'pitch en ' + h + ':' +
+          String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+        setTimeout(tick, 1000);
+      }
+      tick();
+    })();
+  </script>
 </body>
 </html>

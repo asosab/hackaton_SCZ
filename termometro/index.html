@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulso Ciudadano — simulación</title>
+  <meta name="description" content="Simulación de un centro de señal social para la alcaldía: termómetro de temas, alerta temprana y derivación a cuerpos de emergencia.">
+  <link rel="stylesheet" href="pulso.css">
+</head>
+<body>
+
+  <div id="alarmEdge" class="alarm-edge" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-name">PULSO<b>CIUDADANO</b></span>
+      <span class="brand-sub">centro de señal social · GAMSC</span>
+      <span class="sim-tag">SIMULACIÓN</span>
+    </div>
+    <div class="topbar-center">
+      <div class="global-temp">
+        <span class="gt-label">temperatura social</span>
+        <div class="gt-bar"><div class="gt-fill" id="globalTempFill"></div></div>
+        <span class="gt-value" id="globalTempVal">24°</span>
+      </div>
+      <div class="rate"><span id="sigRate">0</span> señales/min</div>
+      <div class="clock" id="simClock">20:30</div>
+    </div>
+    <div class="controls">
+      <button class="ctl ctl-danger" id="btnAsalto">▶ ataque armado</button>
+      <button class="ctl ctl-warn" id="btnLluvia">▶ anegamiento</button>
+      <button class="ctl" id="btnPause">pausa</button>
+      <button class="ctl" id="btnReset">reiniciar</button>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <!-- Feed de señales -->
+    <section class="col feed-col">
+      <h2 class="col-title">señal entrante <span class="col-sub">posts públicos · canales vecinales</span></h2>
+      <ul class="feed" id="feed"></ul>
+    </section>
+
+    <!-- Incidente activo -->
+    <section class="col incident-col">
+      <h2 class="col-title">incidente <span class="col-sub">clustering + veracidad + derivación</span></h2>
+
+      <div class="incident-empty" id="incidentEmpty">
+        <p>sin incidentes activos</p>
+        <p class="dim">las señales sueltas no alarman: el sistema espera corroboración de fuentes independientes antes de declarar un evento</p>
+      </div>
+
+      <article class="incident" id="incidentCard" hidden>
+        <div class="inc-head">
+          <span class="inc-status" id="incStatus">DETECTADO</span>
+          <h3 id="incTitle">—</h3>
+          <span class="inc-time" id="incTime"></span>
+        </div>
+
+        <div class="inc-where">
+          <svg id="map" viewBox="0 0 200 200" class="map"></svg>
+          <div class="inc-loc">
+            <span class="lbl">ubicación inferida</span>
+            <strong id="incPlace">—</strong>
+            <span class="dim" id="incGeoConf">consenso geo: —</span>
+            <span class="lbl" style="margin-top:8px">qué es</span>
+            <span id="incPattern" class="pattern">—</span>
+          </div>
+        </div>
+
+        <div class="inc-photos" id="incPhotos"></div>
+
+        <div class="inc-veracity">
+          <div class="v-head">
+            <span class="lbl">veracidad por contraste de fuentes</span>
+            <span class="v-value" id="vValue">0%</span>
+          </div>
+          <div class="v-bar"><div class="v-fill" id="vFill"></div></div>
+          <div class="v-scale"><span>rumor</span><span>emergiendo</span><span>corroborado</span><span>verificado</span></div>
+          <ul class="v-sources" id="vSources"></ul>
+        </div>
+
+        <div class="inc-routing" id="incRouting" hidden>
+          <span class="lbl">cuerpo competente sugerido</span>
+          <div class="routing-main">
+            <strong id="routeBody">—</strong>
+            <span class="route-why" id="routeWhy"></span>
+          </div>
+          <div class="routing-sec" id="routeSec" hidden></div>
+          <div class="routing-actions" id="routeActions">
+            <button class="act act-primary" id="btnDerivar">derivar ahora</button>
+            <button class="act" id="btnFalso">falsa alarma</button>
+          </div>
+          <div class="dispatch-log" id="dispatchLog" hidden></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Termómetros -->
+    <section class="col thermo-col">
+      <h2 class="col-title">termómetro por tema <span class="col-sub">ruido municipal, últimas 24 h</span></h2>
+      <ul class="thermos" id="thermos"></ul>
+
+      <div class="gain" id="gainPanel" hidden>
+        <h2 class="col-title">señal social vs. canal oficial</h2>
+        <div class="gain-rows">
+          <div class="gain-row">
+            <span class="g-lbl">primer post social</span>
+            <div class="g-track"><div class="g-bar g-social" id="gSocial"></div><span class="g-time" id="gSocialT">—</span></div>
+          </div>
+          <div class="gain-row">
+            <span class="g-lbl">primera llamada 110</span>
+            <div class="g-track"><div class="g-bar g-official" id="gOfficial"></div><span class="g-time" id="gOfficialT">—</span></div>
+          </div>
+        </div>
+        <div class="gain-result" id="gainResult">—</div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    demo para pitch · datos ilustrativos basados en relevamiento real de prensa y redes (oct–nov 2026) · sin scraping, sin perfiles personales
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

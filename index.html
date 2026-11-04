@@ -11,7 +11,7 @@
   <header class="site-header">
     <div class="container">
       <span class="logo">hackaton<b>SCZ</b></span>
-      <span class="countdown" id="countdown"></span>
+      <span class="countdown">este software se desarrolló en 3 horas y 15 minutos, desde las 5:15 pm hasta las 8:30 pm del 3 de noviembre de 2026</span>
       <nav>
         <a href="#proyecto">El proyecto</a>
         <a href="#equipo">Equipo</a>
@@ -25,9 +25,9 @@
       <p class="kicker">Santa Cruz de la Sierra · Tech Week 2026</p>
       <h1>Un proyecto que se construye en público</h1>
       <p class="lede">
-        Esto arrancó el 3 de noviembre de 2026, en el hackathon que se corre en la
-        Plaza 24 de Septiembre. Todavía estamos definiendo la idea; lo que sí está
-        claro es que vamos a contar el proceso entero en el
+        Esto arrancó y se presentó el 3 de noviembre de 2026, en el hackathon que
+        se corrió en la Plaza 24 de Septiembre. El resultado es Pulso Ciudadano;
+        el proceso entero quedó contado en el
         <a href="diario/">diario</a>.
       </p>
     </div>
@@ -47,6 +47,61 @@
         <a href="termometro/">Ver la simulación en vivo</a> — el demo que
         presentamos en el pitch. El <a href="diario/">diario</a> registra cómo
         llegamos hasta acá.
+      </p>
+
+      <h3>1. El termómetro de los temas de la ciudad</h3>
+      <p>
+        El sistema muestrea en tiempo real todo lo que la gente publica sobre
+        los temas que le competen al GAMSC: ordenamiento de mercados, micros y
+        su tarifa, inseguridad, lluvias, dengue, robo de cables, bacheo. Cada
+        señal entra con dos etiquetas: la secretaría o dependencia a la que le
+        toca responder — Tránsito, Salud, Alumbrado, Guardia Municipal — y el
+        tono del reporte — apoyo, enojo, denuncia, burla, escepticismo, pánico —
+        que pesa positivo o negativo sobre el tema. Ese cruce alimenta un
+        termómetro por tema, que sube o baja según el volumen y el sentimiento
+        del momento.
+      </p>
+      <p>
+        Con eso se puede ver cuándo un tema deja de ser ruido y se vuelve
+        crisis, medir si un operativo baja la temperatura o la prende más, y
+        avisar al gabinete cuando un tema cruza el umbral antes de llegar a los
+        titulares.
+      </p>
+
+      <h3>2. Urgencias que se despachan solas</h3>
+      <p>
+        Debajo del ruido corren situaciones concretas: un tiroteo, un canal que
+        se desborda, un choque que bloquea un anillo. El sistema las analiza una
+        por una en tiempo real y cruza la información dispersa — posts de
+        vecinos, fotos, videos, prensa barrial, cámaras municipales — hasta que
+        el contraste de fuentes alcanza un piso de veracidad y las ubicaciones
+        reportadas convergen en un punto. Recién ahí dispara mensajes
+        automáticos a la unidad que corresponde, con el patrón detectado, la
+        ubicación y su margen de error, y las fuentes que lo sostienen.
+      </p>
+      <p>
+        En la simulación eso compra entre 14 y 18 minutos sobre la primera
+        llamada al 110. En producción significa que la alerta llega a la
+        Policía, a Bomberos o a Defensa Civil antes de que la ciudad termine de
+        llamar, con un acuse por cada derivación y un filtro contra las falsas
+        alarmas.
+      </p>
+
+      <h3>3. La memoria estadística de la ciudad</h3>
+      <p>
+        Nada se borra al final del día: cada señal queda archivada con su tema,
+        su zona, su tono y el caso que derivó. Señales procesadas, casos
+        derivados, veracidad media, minutos ganados — el acumulado diario forma
+        una base estadística que nutre los informes oficiales y sirve para
+        entender la ciudad con datos: qué temas se repiten, en qué zonas, con
+        qué estacionalidad.
+      </p>
+      <p>
+        Esa base permite presupuestar por evidencia, medir la gestión por la
+        percepción real de la gente en vez de encuestas tardías, abrir datasets
+        a la prensa y a las universidades, y detectar los temas crónicos que
+        nunca llegan a urgencia pero desgastan: un bache que dura dos meses,
+        una cuadra a oscuras, un criadero de zancudos.
       </p>
     </section>
 
@@ -83,20 +138,5 @@
     </div>
   </footer>
 
-  <script>
-    (function () {
-      var end = new Date(2026, 10, 3, 20, 30); // el pitch es hoy a las 8:30 pm
-      var el = document.getElementById('countdown');
-      function tick() {
-        var s = Math.floor((end - new Date()) / 1000);
-        if (s <= 0) { el.textContent = 'estamos presentando'; return; }
-        var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
-        el.textContent = 'pitch en ' + h + ':' +
-          String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
-        setTimeout(tick, 1000);
-      }
-      tick();
-    })();
-  </script>
 </body>
 </html>

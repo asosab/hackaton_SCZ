@@ -6,6 +6,7 @@
   <title>Pulso Ciudadano — simulación</title>
   <meta name="description" content="Simulación de un centro de señal social para la alcaldía: termómetro de temas, alerta temprana y derivación a cuerpos de emergencia.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='6.5' y='1' width='3' height='9' rx='1.5' fill='%23ef4444'/%3E%3Ccircle cx='8' cy='12' r='3.5' fill='%23ef4444'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="pulso.css">
 </head>
 <body>
@@ -44,6 +45,9 @@
     <!-- Feed de señales -->
     <section class="col feed-col">
       <h2 class="col-title">señal entrante <span class="col-sub">posts públicos · canales vecinales</span></h2>
+      <div class="src-legend">
+        fuentes: <span>FB público</span><span>X</span><span>TikTok</span><span>canales WA vecinales</span><span>prensa local</span><span>cámaras GAMSC</span><span>SENAMHI</span><span>línea 110</span>
+      </div>
       <ul class="feed" id="feed"></ul>
     </section>
 
@@ -64,7 +68,10 @@
         </div>
 
         <div class="inc-where">
-          <svg id="map" viewBox="0 0 200 200" class="map"></svg>
+          <div class="mapwrap">
+            <svg id="map" viewBox="0 0 200 200" class="map"></svg>
+            <div id="mapLeaf" class="map-leaf" hidden></div>
+          </div>
           <div class="inc-loc">
             <span class="lbl">ubicación inferida</span>
             <strong id="incPlace">—</strong>
@@ -129,7 +136,10 @@
     <div class="stats-grid">
       <div class="stat-col">
         <h2 class="col-title">zonas cubiertas <span class="col-sub">temperatura y tema dominante · clic para detalle</span></h2>
-        <svg id="zoneMap" viewBox="0 0 240 240" class="zonemap"></svg>
+        <div class="zonemap-wrap">
+          <svg id="zoneMap" viewBox="0 0 240 240" class="zonemap"></svg>
+          <div id="zoneMapLeaf" class="zonemap-leaf" hidden></div>
+        </div>
         <div class="zone-detail" id="zoneDetail">selecciona una zona en el mapa</div>
       </div>
       <div class="stat-col">
@@ -149,10 +159,15 @@
   </section>
 
   <footer class="foot">
-    demo para pitch · datos ilustrativos basados en relevamiento real de prensa y redes (oct–nov 2026) · sin scraping, sin perfiles personales
+    demo para pitch · datos ilustrativos basados en relevamiento real de prensa y redes (oct–nov 2026) ·
+    fuentes simuladas: páginas públicas de Facebook, X, TikTok, canales vecinales de WhatsApp, prensa local
+    (El Deber, Red Uno, eju.tv), cámaras municipales, estación hidrológica SENAMHI SAMHI-01, registro 110 ·
+    sin scraping, sin perfiles personales
   </footer>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="data.js"></script>
+  <script src="banco.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

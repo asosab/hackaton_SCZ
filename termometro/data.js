@@ -50,11 +50,15 @@ const BG_FEED = [
    t = segundos de reloj de simulación desde el disparo.
    Cada paso: feed (post), photo (foto ciudadana), source (suma veracidad),
    status, geo, route, call110, gain. */
+/* Coordenadas reales aproximadas (simulación) — centro: Plaza 24 de Septiembre */
+const SCZ_CENTER = [-17.7835, -63.1821];
+
 const SC_ASALTO = {
   id: 'asalto',
   title: 'Ataque armado en vía pública',
   place: 'Av. Banzer km 5,5 · zona Norte',
-  mapPoint: { x: 118, y: 44 },          /* punto en el mapa de anillos */
+  mapPoint: { x: 118, y: 44 },          /* punto en el mapa de anillos (fallback) */
+  loc: [-17.7462, -63.1698],
   topic: 'inseguridad',
   zone: 'norte', stype: 'violencia',
   steps: [
@@ -98,6 +102,7 @@ const SC_LLUVIA = {
   title: 'Anegamiento con familias aisladas',
   place: 'Valle Hermoso, D-11',
   mapPoint: { x: 66, y: 152 },
+  loc: [-17.7598, -63.1455],
   topic: 'lluvias',
   zone: 'este', stype: 'inundación',
   steps: [
@@ -142,14 +147,19 @@ const BODIES = {
    Wedges anulares: centro (r<24) + 4 cuadrantes N/E/S/O (24..108). */
 const ZONES = [
   { id: 'centro', name: 'Centro · casco viejo y mercados', kind: 'circle', r: 24,
+    b1: 0, b2: 360,
     temp: 58, topic: 'ordenamiento Los Pozos' },
   { id: 'norte', name: 'Norte · Av. Banzer / Urubó', a1: -135, a2: -45,
+    b1: -45, b2: 45,
     temp: 47, topic: 'inseguridad ciudadana' },
   { id: 'este', name: 'Este · Paurito / Valle Hermoso', a1: -45, a2: 45,
+    b1: 45, b2: 135,
     temp: 39, topic: 'lluvias y anegamiento' },
   { id: 'sur', name: 'Sur · El Torno / Abasto', a1: 45, a2: 135,
+    b1: 135, b2: 225,
     temp: 44, topic: 'micros y tarifa' },
   { id: 'oeste', name: 'Oeste · Pampa de la Isla / El Bajío', a1: 135, a2: 225,
+    b1: 225, b2: 315,
     temp: 33, topic: 'robo de cables' },
 ];
 
@@ -166,17 +176,24 @@ const GEO_ZONE = {
    Alimentan la estadística mientras corre el demo. */
 const CASE_POOL = [
   { type: 'infraestructura', body: 'ALUMBRADO PÚBLICO', zone: 'oeste', geo: 'radial',
+    loc: [-17.7960, -63.2180],
     text: 'Poste de alumbrado caído sobre la radial, un carril bloqueado' },
   { type: 'incendio', body: 'BOMBEROS', zone: 'centro', geo: 'mercado',
+    loc: [-17.7760, -63.1798],
     text: 'Humo denso saliendo de una caseta del mercado, posible corto' },
   { type: 'robo', body: 'POLICÍA BOLIVIANA', zone: 'sur', geo: 'D-9',
+    loc: [-17.8150, -63.1910],
     text: 'Vecinos reportan arrebatos en moto frente al canal del D-9' },
   { type: 'inundación', body: 'DEFENSA CIVIL / SEAC', zone: 'este', geo: 'Vallecitos',
+    loc: [-17.7940, -63.1500],
     text: 'El canal sube rápido en Vallecitos, dos casas con agua adentro' },
   { type: 'tránsito', body: 'TRÁNSITO', zone: 'norte', geo: '6to anillo',
+    loc: [-17.7310, -63.1810],
     text: 'Choque en el 6to anillo, dos carriles bloqueados sentido norte' },
   { type: 'salud', body: 'SALUD (SEDES)', zone: 'sur', geo: 'D-9',
+    loc: [-17.8180, -63.1860],
     text: 'Solar abandonado con llantas y agua estancada: criadero de zancudos' },
   { type: 'infraestructura', body: 'GUARDIA MUNICIPAL', zone: 'centro', geo: 'La Ramada',
+    loc: [-17.7915, -63.1815],
     text: 'Reocupación de aceras en La Ramada, comerciantes vuelven a instalar toldos' },
 ];

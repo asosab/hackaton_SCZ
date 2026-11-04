@@ -11,6 +11,11 @@
   var incident = null;                    // incidente activo
   var history = {};                       // sparklines por tema
   var caseIdx = 0;                        // rotación del pool de casos
+  var realMap = (typeof L !== 'undefined'); // Leaflet cargó → mapa real; si no, SVG de anillos
+  var incMap = null, bigMap = null;       // instancias Leaflet
+  var incCircle = null, incMarker = null; // capas del incidente en el mapa real
+  var bigIncMarker = null;
+  var caseMarkers = [];                   // puntos de casos de fondo en el mapa grande
 
   /* estadística acumulada del día (semilla) */
   var stats = {
@@ -143,6 +148,21 @@
   }
 
   function setMapPoint(x, y, conf) {
+    if (realMap && incMap && incident) {
+      var loc = incident.sc.loc;
+      incMap.invalidateSize();
+      incMap.setView(loc, 14);
+      if (incCircle) incMap.removeLayer(incCircle);
+      if (incMarker) incMap.removeLayer(incMarker);
+      incCircle = L.circle(loc, {
+        radius: Math.max(40, conf), color: '#ef4444', weight: 1,
+        dashArray: '4 3', fillColor: '#ef4444', fillOpacity: 0.12
+      }).addTo(incMap);
+      incMarker = L.circleMarker(loc, {
+        radius: 4, color: '#fff', weight: 1, fillColor: '#ef4444', fillOpacity: 1
+      }).addTo(incMap);
+      return;
+    }
     var g = mapSvg.querySelector('#mapPoint');
     if (!g) return;
     var r = Math.max(4, conf / 6);
@@ -297,6 +317,7 @@
     $('gSocial').style.width = '0';
     $('gOfficial').style.width = '0';
     setMapPoint(sc.mapPoint.x, sc.mapPoint.y, 600);
+    dropIncidentMarker(sc);
   }
 
   function setV(v) {
@@ -353,6 +374,7 @@
     $('incidentCard').hidden = true;
     $('incidentEmpty').hidden = false;
     $('routeActions').style.opacity = '1';
+    clearIncidentMarker();
     incident = null;
   });
 
@@ -462,10 +484,15 @@
 
   function refreshZoneMap() {
     ZONES.forEach(function (z) {
-      var p = zoneMap.querySelector('#zp-' + z.id);
-      if (p) p.setAttribute('fill', zoneColor(z.temp));
-      var t = zoneMap.querySelector('#zt-' + z.id);
-      if (t) t.textContent = Math.round(z.temp) + '°';
+      if (realMap && z.layer) {
+        z.layer.setStyle({ fillColor: zoneColor(z.temp), color: 'rgba(120,140,170,.5)' });
+        if (z.tip) z.tip.setContent('<b>' + z.id.toUpperCase() + '</b> · ' + Math.round(z.temp) + '° · ' + z.topic);
+      } else {
+        var p = zoneMap.querySelector('#zp-' + z.id);
+        if (p) p.setAttribute('fill', zoneColor(z.temp));
+        var t = zoneMap.querySelector('#zt-' + z.id);
+        if (t) t.textContent = Math.round(z.temp) + '°';
+      }
     });
   }
 
@@ -533,7 +560,99 @@
     addDerived(c.type, c.body, c.zone);
     stats.mins += 6 + Math.floor(Math.random() * 11);
     renderStats();
+    dropCaseMarker(c);
   }, 19000);
+
+  function dropCaseMarker(c) {
+    if (!realMap || !bigMap) return;
+    var m = L.circleMarker(c.loc, {
+      radius: 5, color: '#fbbf24', weight: 1.5, fillColor: '#fbbf24', fillOpacity: 0.55
+    }).addTo(bigMap);
+    m.bindTooltip(c.type + ' → ' + c.body, { direction: 'top', className: 'zone-tag' });
+    caseMarkers.push(m);
+    if (caseMarkers.length > 8) bigMap.removeLayer(caseMarkers.shift());
+  }
+
+  /* ── mapa real de Santa Cruz (Leaflet + tiles oscuros).
+       Si no hay red, queda el SVG de anillos como fallback. ── */
+  var TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+  var TILE_ATTR = 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ';
+
+  function destPoint(lat, lng, bearing, distM) {
+    var R = 6371000, d = distM / R, b = bearing * Math.PI / 180;
+    var la = lat * Math.PI / 180, ln = lng * Math.PI / 180;
+    var la2 = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(b));
+    var ln2 = ln + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(la2));
+    return [la2 * 180 / Math.PI, ln2 * 180 / Math.PI];
+  }
+
+  function sectorCoords(r1m, r2m, b1, b2) {
+    var pts = [], b;
+    for (b = b1; b <= b2; b += 6) pts.push(destPoint(SCZ_CENTER[0], SCZ_CENTER[1], b, r2m));
+    for (b = b2; b >= b1; b -= 6) pts.push(destPoint(SCZ_CENTER[0], SCZ_CENTER[1], b, r1m));
+    return pts;
+  }
+
+  function initRealMaps() {
+    if (!realMap) return;
+    $('map').style.display = 'none';
+    $('mapLeaf').hidden = false;
+    $('zoneMap').style.display = 'none';
+    $('zoneMapLeaf').hidden = false;
+
+    // los divs nacen ocultos (tarjeta de incidente / pestaña): el tamaño se
+    // recalcula con invalidateSize() cuando se muestran
+    incMap = L.map('mapLeaf', {
+      zoomControl: false, attributionControl: false,
+      dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+      boxZoom: false, keyboard: false, touchZoom: false
+    }).setView(SCZ_CENTER, 13);
+    L.tileLayer(TILES).addTo(incMap);
+
+    bigMap = L.map('zoneMapLeaf').setView(SCZ_CENTER, 12);
+    L.tileLayer(TILES, { attribution: TILE_ATTR }).addTo(bigMap);
+
+    // Río Piraí al este
+    L.polyline([[-17.700, -63.108], [-17.760, -63.118], [-17.820, -63.128], [-17.875, -63.138]], {
+      color: '#1e4a63', weight: 7, opacity: 0.85
+    }).addTo(bigMap).bindTooltip('Río Piraí', { className: 'zone-tag' });
+
+    // zonas como polígonos reales
+    ZONES.forEach(function (z) {
+      if (z.kind === 'circle') {
+        z.layer = L.circle(SCZ_CENTER, {
+          radius: 1500, color: 'rgba(120,140,170,.5)', weight: 1,
+          fillColor: zoneColor(z.temp), fillOpacity: 1
+        }).addTo(bigMap);
+      } else {
+        z.layer = L.polygon(sectorCoords(1500, 7000, z.b1, z.b2), {
+          color: 'rgba(120,140,170,.5)', weight: 1,
+          fillColor: zoneColor(z.temp), fillOpacity: 1
+        }).addTo(bigMap);
+      }
+      z.layer.on('click', function () { showZone(z.id); });
+      // etiqueta en el centroide de la zona para que no se solapen
+      var lp = z.kind === 'circle'
+        ? destPoint(SCZ_CENTER[0], SCZ_CENTER[1], -20, 900)
+        : destPoint(SCZ_CENTER[0], SCZ_CENTER[1], (z.b1 + z.b2) / 2, 4700);
+      z.tip = L.tooltip({ permanent: true, direction: 'center', className: 'zone-tag' })
+        .setLatLng(lp).addTo(bigMap);
+    });
+    refreshZoneMap();
+  }
+
+  function dropIncidentMarker(sc) {
+    if (!realMap || !bigMap) return;
+    if (bigIncMarker) bigMap.removeLayer(bigIncMarker);
+    bigIncMarker = L.circleMarker(sc.loc, {
+      radius: 7, color: '#fff', weight: 1.5, fillColor: '#ef4444', fillOpacity: 0.9
+    }).addTo(bigMap);
+    bigIncMarker.bindTooltip('<b>' + sc.title + '</b><br>' + sc.place, { className: 'zone-tag' });
+  }
+
+  function clearIncidentMarker() {
+    if (bigIncMarker && bigMap) { bigMap.removeLayer(bigIncMarker); bigIncMarker = null; }
+  }
 
   /* pestañas */
   $('tabMonitor').addEventListener('click', function () {
@@ -546,6 +665,7 @@
     document.querySelector('.layout').hidden = true;
     $('statsView').hidden = false;
     renderStats();
+    if (bigMap) bigMap.invalidateSize();
   });
 
   /* ── controles ── */
@@ -565,9 +685,13 @@
     $('routeActions').style.opacity = '1';
     feed.innerHTML = '';
     mapSvg.querySelector('#mapPoint').innerHTML = '';
+    clearIncidentMarker();
+    if (incCircle && incMap) { incMap.removeLayer(incCircle); incCircle = null; }
+    if (incMarker && incMap) { incMap.removeLayer(incMarker); incMarker = null; }
   });
 
   buildMap();
   buildZoneMap();
+  initRealMaps();
   renderStats();
 })();

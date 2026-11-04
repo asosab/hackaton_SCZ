@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pulso Ciudadano — simulación</title>
   <meta name="description" content="Simulación de un centro de señal social para la alcaldía: termómetro de temas, alerta temprana y derivación a cuerpos de emergencia.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='6.5' y='1' width='3' height='9' rx='1.5' fill='%23ef4444'/%3E%3Ccircle cx='8' cy='12' r='3.5' fill='%23ef4444'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="pulso.css">
 </head>
 <body>
@@ -16,6 +17,10 @@
       <span class="brand-name">PULSO<b>CIUDADANO</b></span>
       <span class="brand-sub">centro de señal social · GAMSC</span>
       <span class="sim-tag">SIMULACIÓN</span>
+      <div class="tabs">
+        <button class="tab active" id="tabMonitor">monitor</button>
+        <button class="tab" id="tabStats">mapa y estadística</button>
+      </div>
     </div>
     <div class="topbar-center">
       <div class="global-temp">
@@ -119,6 +124,29 @@
     </section>
 
   </main>
+
+  <section id="statsView" hidden>
+    <div class="stats-grid">
+      <div class="stat-col">
+        <h2 class="col-title">zonas cubiertas <span class="col-sub">temperatura y tema dominante · clic para detalle</span></h2>
+        <svg id="zoneMap" viewBox="0 0 240 240" class="zonemap"></svg>
+        <div class="zone-detail" id="zoneDetail">selecciona una zona en el mapa</div>
+      </div>
+      <div class="stat-col">
+        <h2 class="col-title">estadística de acontecimientos <span class="col-sub">acumulado del día</span></h2>
+        <div class="counters">
+          <div class="counter"><span id="cSignals">0</span><label>señales procesadas</label></div>
+          <div class="counter"><span id="cDerived">0</span><label>casos derivados</label></div>
+          <div class="counter"><span id="cMins">0</span><label>minutos ganados acum.</label></div>
+          <div class="counter"><span id="cVerac">—</span><label>veracidad media</label></div>
+        </div>
+        <h3 class="sub-title">casos por tipo</h3>
+        <div class="bars" id="barsType"></div>
+        <h3 class="sub-title">derivaciones por cuerpo</h3>
+        <div class="bars" id="barsBody"></div>
+      </div>
+    </div>
+  </section>
 
   <footer class="foot">
     demo para pitch · datos ilustrativos basados en relevamiento real de prensa y redes (oct–nov 2026) · sin scraping, sin perfiles personales

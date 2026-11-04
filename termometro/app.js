@@ -10,6 +10,15 @@
   var scenario = null;                    // escenario en curso
   var incident = null;                    // incidente activo
   var history = {};                       // sparklines por tema
+  var caseIdx = 0;                        // rotación del pool de casos
+
+  /* estadística acumulada del día (semilla) */
+  var stats = {
+    signals: 1240, derived: 14, mins: 187,
+    byType: { 'robo': 4, 'inundación': 3, 'infraestructura': 3, 'incendio': 2, 'tránsito': 1, 'salud': 1 },
+    byBody: { 'POLICÍA BOLIVIANA': 4, 'DEFENSA CIVIL / SEAC': 3, 'ALUMBRADO PÚBLICO': 3, 'BOMBEROS': 2, 'TRÁNSITO': 1, 'SALUD (SEDES)': 1 },
+    vSum: 14 * 84, vCount: 14
+  };
 
   var $ = function (id) { return document.getElementById(id); };
   var feed = $('feed'), thermos = $('thermos'), mapSvg = $('map');
@@ -36,14 +45,18 @@
     var net = official ? '<span class="f-net">110</span>'
       : '<span class="f-net net-' + item.net + '">' + NETS[item.net] + '</span>';
     var topicChip = item.topic ? '<span class="chip chip-topic">' + item.topic + '</span>' : '';
+    var routeChip = item.route ? '<span class="chip chip-route">→ ' + item.route + '</span>' : '';
     li.innerHTML =
-      '<div class="f-meta">' + net + toneChip + topicChip + geo +
+      '<div class="f-meta">' + net + toneChip + topicChip + geo + routeChip +
       '<span class="f-time">' + fmt(simMin) + '</span></div>' +
       '<div class="f-text">' + item.text + '</div>';
     feed.insertBefore(li, feed.firstChild);
     while (feed.children.length > 40) feed.removeChild(feed.lastChild);
     feedTimes.push(Date.now());
+    stats.signals++;
+    $('cSignals').textContent = stats.signals;
     if (item.topic) bumpTopic(item.topic, 3 + Math.random() * 4);
+    if (item.geo && GEO_ZONE[item.geo]) bumpZone(GEO_ZONE[item.geo], 4);
   }
 
   function bumpTopic(id, delta) {
@@ -276,8 +289,13 @@
     $('vSources').innerHTML = '';
     setV(0);
     $('incRouting').hidden = true;
+    $('routeSec').hidden = true;
+    $('routeBody').className = '';
+    $('routeActions').style.opacity = '1';
     $('dispatchLog').hidden = true;
     $('gainPanel').hidden = true;
+    $('gSocial').style.width = '0';
+    $('gOfficial').style.width = '0';
     setMapPoint(sc.mapPoint.x, sc.mapPoint.y, 600);
   }
 
@@ -297,6 +315,7 @@
     if (route) {
       $('incRouting').hidden = false;
       $('routeBody').textContent = route.body;
+      if (incident) incident.routeBody = route.body;
       $('routeBody').className = /DEFENSA|SEAC|BOMBEROS/.test(route.body) ? 'ok-body' : '';
       $('routeWhy').textContent = route.why;
       if (route.sec) { $('routeSec').hidden = false; $('routeSec').textContent = route.sec; }
@@ -374,6 +393,12 @@
         break;
       case 'gain':
         showGain(st);
+        if (incident) {
+          addDerived(incident.sc.stype, incident.routeBody || 'POLICÍA BOLIVIANA');
+          stats.mins += st.mins;
+          bumpZone(incident.sc.zone, 18);
+          renderStats();
+        }
         break;
     }
   }
@@ -391,6 +416,137 @@
     }, 60);
     $('gainResult').textContent = 'la señal social adelantó ' + g.mins + ' min al canal oficial';
   }
+
+  /* ── mapa de zonas + estadística ── */
+  var zoneMap = $('zoneMap');
+
+  function zoneColor(t) {
+    if (t < 30) return 'hsla(200,80%,55%,.25)';
+    if (t < 45) return 'hsla(160,70%,45%,.30)';
+    if (t < 60) return 'hsla(45,90%,55%,.32)';
+    if (t < 75) return 'hsla(20,90%,55%,.36)';
+    return 'hsla(0,85%,55%,.42)';
+  }
+
+  function wedgePath(cx, cy, r1, r2, a1, a2) {
+    var p = function (r, a) {
+      var rad = a * Math.PI / 180;
+      return (cx + r * Math.cos(rad)).toFixed(1) + ' ' + (cy + r * Math.sin(rad)).toFixed(1);
+    };
+    var large = (a2 - a1) > 180 ? 1 : 0;
+    return 'M ' + p(r2, a1) + ' A ' + r2 + ' ' + r2 + ' 0 ' + large + ' 1 ' + p(r2, a2) +
+           ' L ' + p(r1, a2) + ' A ' + r1 + ' ' + r1 + ' 0 ' + large + ' 0 ' + p(r1, a1) + ' Z';
+  }
+
+  function buildZoneMap() {
+    var s = '';
+    ZONES.forEach(function (z) {
+      var d = z.kind === 'circle'
+        ? 'M ' + (120 + z.r) + ' 120 A ' + z.r + ' ' + z.r + ' 0 1 1 ' + (120 - z.r) + ' 120 A ' + z.r + ' ' + z.r + ' 0 1 1 ' + (120 + z.r) + ' 120'
+        : wedgePath(120, 120, 24, 108, z.a1, z.a2);
+      var mid = z.kind === 'circle' ? { x: 120, y: 120 }
+        : { x: 120 + 66 * Math.cos((z.a1 + z.a2) / 2 * Math.PI / 180),
+            y: 120 + 66 * Math.sin((z.a1 + z.a2) / 2 * Math.PI / 180) };
+      z.lx = mid.x; z.ly = mid.y;
+      s += '<path class="zone-path" id="zp-' + z.id + '" d="' + d + '" data-zone="' + z.id + '"/>';
+      s += '<text class="zone-lbl" x="' + mid.x + '" y="' + (mid.y - 3) + '" text-anchor="middle">' + z.id + '</text>';
+      s += '<text class="zone-temp" id="zt-' + z.id + '" x="' + mid.x + '" y="' + (mid.y + 9) + '" text-anchor="middle"></text>';
+    });
+    s += '<circle cx="120" cy="120" r="108" fill="none" stroke="#2c3648" stroke-width="1.5"/>';
+    zoneMap.innerHTML = s;
+    zoneMap.querySelectorAll('.zone-path').forEach(function (p) {
+      p.addEventListener('click', function () { showZone(p.getAttribute('data-zone')); });
+    });
+    refreshZoneMap();
+  }
+
+  function refreshZoneMap() {
+    ZONES.forEach(function (z) {
+      var p = zoneMap.querySelector('#zp-' + z.id);
+      if (p) p.setAttribute('fill', zoneColor(z.temp));
+      var t = zoneMap.querySelector('#zt-' + z.id);
+      if (t) t.textContent = Math.round(z.temp) + '°';
+    });
+  }
+
+  function bumpZone(id, d) {
+    ZONES.forEach(function (z) {
+      if (z.id === id) z.temp = Math.max(5, Math.min(98, z.temp + d));
+    });
+  }
+
+  function showZone(id) {
+    var z = ZONES.filter(function (x) { return x.id === id; })[0];
+    if (!z) return;
+    $('zoneDetail').innerHTML =
+      '<strong>' + z.name + '</strong> · <span style="color:var(--warn)">' + Math.round(z.temp) +
+      '°</span> · tema dominante: <em>' + z.topic + '</em>' +
+      (z.cases && z.cases.length ? ' · casos recientes: ' + z.cases.slice(-3).join(', ') : '');
+  }
+
+  setInterval(function () {
+    if (paused) return;
+    ZONES.forEach(function (z) {
+      z.temp = Math.max(5, Math.min(98, z.temp + (Math.random() - 0.52) * 2));
+    });
+    refreshZoneMap();
+  }, 1600);
+
+  function addDerived(type, body, zone) {
+    stats.derived++;
+    stats.byType[type] = (stats.byType[type] || 0) + 1;
+    stats.byBody[body] = (stats.byBody[body] || 0) + 1;
+    stats.vSum += 70 + Math.random() * 25;
+    stats.vCount++;
+    if (zone) {
+      var z = ZONES.filter(function (x) { return x.id === zone; })[0];
+      if (z) { (z.cases = z.cases || []).push(type); bumpZone(zone, 6); }
+    }
+  }
+
+  function renderBars(el, obj, color) {
+    var entries = Object.keys(obj).map(function (k) { return [k, obj[k]]; })
+      .sort(function (a, b) { return b[1] - a[1]; });
+    var max = entries.length ? entries[0][1] : 1;
+    el.innerHTML = entries.map(function (e) {
+      return '<div class="bar-row"><span class="bar-lbl">' + e[0] + '</span>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + (e[1] / max * 100) + '%;background:' + color + '"></div></div>' +
+        '<span class="bar-n">' + e[1] + '</span></div>';
+    }).join('');
+  }
+
+  function renderStats() {
+    $('cSignals').textContent = stats.signals;
+    $('cDerived').textContent = stats.derived;
+    $('cMins').textContent = stats.mins;
+    $('cVerac').textContent = Math.round(stats.vSum / stats.vCount) + '%';
+    renderBars($('barsType'), stats.byType, 'var(--warn)');
+    renderBars($('barsBody'), stats.byBody, 'var(--acc)');
+  }
+
+  /* casos menores auto-derivados en segundo plano */
+  setInterval(function () {
+    if (paused) return;
+    var c = CASE_POOL[caseIdx % CASE_POOL.length];
+    caseIdx++;
+    addFeed({ net: 'fb', tone: 'denuncia', text: c.text, geo: c.geo, route: c.body });
+    addDerived(c.type, c.body, c.zone);
+    stats.mins += 6 + Math.floor(Math.random() * 11);
+    renderStats();
+  }, 19000);
+
+  /* pestañas */
+  $('tabMonitor').addEventListener('click', function () {
+    $('tabMonitor').classList.add('active'); $('tabStats').classList.remove('active');
+    document.querySelector('.layout').hidden = false;
+    $('statsView').hidden = true;
+  });
+  $('tabStats').addEventListener('click', function () {
+    $('tabStats').classList.add('active'); $('tabMonitor').classList.remove('active');
+    document.querySelector('.layout').hidden = true;
+    $('statsView').hidden = false;
+    renderStats();
+  });
 
   /* ── controles ── */
   $('btnAsalto').addEventListener('click', function () { if (!incident || !incident.derived) runScenario(SC_ASALTO); });
@@ -412,4 +568,6 @@
   });
 
   buildMap();
+  buildZoneMap();
+  renderStats();
 })();

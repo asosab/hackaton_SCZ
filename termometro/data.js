@@ -56,6 +56,7 @@ const SC_ASALTO = {
   place: 'Av. Banzer km 5,5 · zona Norte',
   mapPoint: { x: 118, y: 44 },          /* punto en el mapa de anillos */
   topic: 'inseguridad',
+  zone: 'norte', stype: 'violencia',
   steps: [
     { t: 0,  kind: 'feed', net: 'wa', tone: 'panico',
       text: 'Están tirando bala por la Banzer, me metí a una tienda, no sé qué pasa',
@@ -98,6 +99,7 @@ const SC_LLUVIA = {
   place: 'Valle Hermoso, D-11',
   mapPoint: { x: 66, y: 152 },
   topic: 'lluvias',
+  zone: 'este', stype: 'inundación',
   steps: [
     { t: 0,  kind: 'feed', net: 'fb', tone: 'denuncia',
       text: 'El canal de Valle Hermoso se desbordó, el agua ya entró a las casas de la primera cuadra',
@@ -129,4 +131,52 @@ const SC_LLUVIA = {
 const BODIES = {
   'POLICÍA BOLIVIANA': 'Comando departamental — red de emergencias',
   'DEFENSA CIVIL / SEAC': 'Coordinación de emergencias municipales',
+  'BOMBEROS': 'Bomberos — red de emergencias',
+  'GUARDIA MUNICIPAL': 'Despacho de la Guardia Municipal',
+  'TRÁNSITO': 'Dirección de Tránsito y Transporte',
+  'SALUD (SEDES)': 'SEDES — vigilancia epidemiológica',
+  'ALUMBRADO PÚBLICO': 'Empresa de alumbrado — cuadrillas',
 };
+
+/* Zonas de la ciudad sobre el mapa de anillos.
+   Wedges anulares: centro (r<24) + 4 cuadrantes N/E/S/O (24..108). */
+const ZONES = [
+  { id: 'centro', name: 'Centro · casco viejo y mercados', kind: 'circle', r: 24,
+    temp: 58, topic: 'ordenamiento Los Pozos' },
+  { id: 'norte', name: 'Norte · Av. Banzer / Urubó', a1: -135, a2: -45,
+    temp: 47, topic: 'inseguridad ciudadana' },
+  { id: 'este', name: 'Este · Paurito / Valle Hermoso', a1: -45, a2: 45,
+    temp: 39, topic: 'lluvias y anegamiento' },
+  { id: 'sur', name: 'Sur · El Torno / Abasto', a1: 45, a2: 135,
+    temp: 44, topic: 'micros y tarifa' },
+  { id: 'oeste', name: 'Oeste · Pampa de la Isla / El Bajío', a1: 135, a2: 225,
+    temp: 33, topic: 'robo de cables' },
+];
+
+const GEO_ZONE = {
+  'Av. Banzer': 'norte', 'zona Norte': 'norte', 'Av. Banzer km 5,5': 'norte',
+  '4to anillo': 'norte', '6to anillo': 'norte',
+  'Valle Hermoso': 'este', 'Valle Hermoso D-11': 'este', 'Vallecitos': 'este',
+  'La Ramada': 'centro', '2do anillo': 'centro', 'mercado': 'centro',
+  'D-8': 'oeste', 'D-6': 'oeste', 'radial': 'oeste',
+  'D-9': 'sur', '5to anillo': 'sur',
+};
+
+/* Casos menores que el sistema deriva solo, en segundo plano.
+   Alimentan la estadística mientras corre el demo. */
+const CASE_POOL = [
+  { type: 'infraestructura', body: 'ALUMBRADO PÚBLICO', zone: 'oeste', geo: 'radial',
+    text: 'Poste de alumbrado caído sobre la radial, un carril bloqueado' },
+  { type: 'incendio', body: 'BOMBEROS', zone: 'centro', geo: 'mercado',
+    text: 'Humo denso saliendo de una caseta del mercado, posible corto' },
+  { type: 'robo', body: 'POLICÍA BOLIVIANA', zone: 'sur', geo: 'D-9',
+    text: 'Vecinos reportan arrebatos en moto frente al canal del D-9' },
+  { type: 'inundación', body: 'DEFENSA CIVIL / SEAC', zone: 'este', geo: 'Vallecitos',
+    text: 'El canal sube rápido en Vallecitos, dos casas con agua adentro' },
+  { type: 'tránsito', body: 'TRÁNSITO', zone: 'norte', geo: '6to anillo',
+    text: 'Choque en el 6to anillo, dos carriles bloqueados sentido norte' },
+  { type: 'salud', body: 'SALUD (SEDES)', zone: 'sur', geo: 'D-9',
+    text: 'Solar abandonado con llantas y agua estancada: criadero de zancudos' },
+  { type: 'infraestructura', body: 'GUARDIA MUNICIPAL', zone: 'centro', geo: 'La Ramada',
+    text: 'Reocupación de aceras en La Ramada, comerciantes vuelven a instalar toldos' },
+];

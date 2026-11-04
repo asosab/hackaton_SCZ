@@ -94,6 +94,14 @@ a { color: var(--green); }
 .diary-entry h2 a:hover { color: var(--green); }
 .diary-post ul { margin: 0 0 1rem 1.4rem; }
 .diary-post li { margin-bottom: .6rem; }
+.diary-post figure { margin: 1.6rem 0; }
+.diary-post figure img {
+  width: 100%; display: block;
+  border: 1px solid var(--line); border-radius: 8px;
+}
+.diary-post figcaption {
+  font-size: .85rem; color: var(--muted); margin-top: .5rem;
+}
 
 .site-footer {
   border-top: 1px solid var(--line); padding: 1.5rem 0;

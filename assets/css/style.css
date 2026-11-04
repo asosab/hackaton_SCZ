@@ -102,6 +102,10 @@ a { color: var(--green); }
 .diary-post figcaption {
   font-size: .85rem; color: var(--muted); margin-top: .5rem;
 }
+.diary-post figure iframe {
+  width: 100%; display: block; aspect-ratio: 16/9;
+  border: 1px solid var(--line); border-radius: 8px;
+}
 
 .site-footer {
   border-top: 1px solid var(--line); padding: 1.5rem 0;
